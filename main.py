@@ -11,7 +11,7 @@ import json
 with open('config.yml', encoding='utf-8') as fh:
     config = yaml.safe_load(fh)
 
-version = '0.0.4'
+version = '0.0.5'
 filename = 'temp/script.zip'
 path = 'temp/script/scripts/org'
 username = config['username']
@@ -36,16 +36,16 @@ app = FastAPI()
 def CompareVersion (url, text, current):
     data = open(path+url, encoding='utf-8')
     file = url.split('/')[-1]
+    webUrl = '<a href="/sript-show/?file=' + url + '&text=' + text +'">'+file+'</a>'
     for line in data:
         if text in line:
             line = line[:-1]
             if line == current:
-                return {"Скрипт": f"{file}", "Актуально": "<center><font color=""green"">Да</font></center>", "bitbaket": f"{line}", "Текущая": f"{current}"}
+                return {"Скрипт": f"{webUrl}", "Актуально": "<center><font color=""green"">Да</font></center>", "bitbaket": f"{line}", "Текущая": f"{current}"}
             else:
-                return {"Скрипт": f"{file}", "Актуально": "<center><font color=""red"">Нет</font></center>", "bitbaket": f"{line}", "Текущая": f"{current}"}
+                return {"Скрипт": f"{webUrl}", "Актуально": "<center><font color=""red"">Нет</font></center>", "bitbaket": f"{line}", "Текущая": f"{current}"}
             break
     data.close()
-
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -83,20 +83,42 @@ def script_forms():
     html_content = head + "<b>Проверка версий скриптов форм на bitbucket</b><br/><br/>"+ json2html.json2html.convert(json=answer, escape=False) + back
     return HTMLResponse(content=html_content, status_code=200)
 
+@app.get ("/sript-show/")
+def show_script(file: str, text: str):
+    answer='<html> <head> <title>'+file+'</title></head><body>'
+    flag=False
+    data = open(path +'/'+ file, encoding='utf-8')
+    for line in data:
+        if text in line:
+            flag = True
+        if flag:
+            if len(line)>1:
+                line = line[:-1]
+            line = line + '<br/>'
+            answer = answer+'<pre>'+line+'</pre>'
+    data.close()
+    index=answer.rfind('}')
+    answer = answer [:index]
+    html_content = answer + '</body> </html>'
+    return HTMLResponse(content=html_content, status_code=200)
+
+
+
 @app.get ("/stends/", response_class=HTMLResponse)
 def stends_alive():
     answer=[]
     for stend in config['Stends']:
+        webUrl='<a href="'+stend['Path']+'">'+stend['Path']+'</a>'
         try:
             r = requests.get(stend['Path'], verify=False, timeout=0.2)
             if r.status_code == 200:
-                answer.append({"Описание": f"{stend['Description']}","Стенд": f"{stend['Path']}", "Доступен": "<center><font color=""green"">Да</font></center>"})
+                answer.append({"Описание": f"{stend['Description']}","Стенд": f"{webUrl}", "Доступен": "<center><font color=""green"">Да</font></center>"})
             else:
-                answer.append({"Описание": f"{stend['Description']}","Стенд": f"{stend['Path']}", "Доступен": f"{r.status_code}"})
+                answer.append({"Описание": f"{stend['Description']}","Стенд": f"{webUrl}", "Доступен": f"{r.status_code}"})
         except requests.exceptions.ConnectTimeout:
-            answer.append({"Описание": f"{stend['Description']}","Стенд": f"{stend['Path']}", "Доступен": "<center><font color=""red"">Нет</font></center>"})
+            answer.append({"Описание": f"{stend['Description']}","Стенд": f"{webUrl}", "Доступен": "<center><font color=""red"">Нет</font></center>"})
         except requests.exceptions.ConnectionError:
-            answer.append({"Описание": f"{stend['Description']}","Стенд": f"{stend['Path']}", "Доступен": "<center><font color=""red"">Нет</font></center>"})
+            answer.append({"Описание": f"{stend['Description']}","Стенд": f"{webUrl}", "Доступен": "<center><font color=""red"">Нет</font></center>"})
     html_content = head + "<b>Проверка доступности стендов</b><br/><br/>"+json2html.json2html.convert(json=answer, escape=False) + back
     return HTMLResponse(content=html_content, status_code=200)
 
