@@ -111,16 +111,16 @@ def stends_alive():
         webUrl='<a href="'+stend['Path']+'">'+stend['Path']+'</a>'
         try:
             r = requests.get(stend['Path'], verify=False, timeout=5)
-            if r.status_code == 200:
-                answer.append({"Описание": f"{stend['Description']}","Стенд": f"{webUrl}", "Доступен": "<center><font color=""green"">Да</font></center>"})
+            if r.status_code == 200 or r.status_code == 401:
+                answer.append({"Описание": f"<pre>{stend['Description']}</pre>","Стенд": f"{webUrl}", "Доступен": "<center><font color=""green"">Да</font></center>"})
             else:
-                answer.append({"Описание": f"{stend['Description']}","Стенд": f"{webUrl}", "Доступен": f"{r.status_code}"})
+                answer.append({"Описание": f"<pre>{stend['Description']}</pre>","Стенд": f"{webUrl}", "Доступен": f"<center>{r.status_code}</center>"})
         except requests.exceptions.ConnectTimeout:
-            answer.append({"Описание": f"{stend['Description']}","Стенд": f"{webUrl}", "Доступен": "<center><font color=""red"">Нет</font></center>"})
+            answer.append({"Описание": f"<pre>{stend['Description']}</pre>","Стенд": f"{webUrl}", "Доступен": "<center><font color=""red"">Нет</font></center>"})
         except requests.exceptions.ConnectionError:
-            answer.append({"Описание": f"{stend['Description']}","Стенд": f"{webUrl}", "Доступен": "<center><font color=""red"">Нет</font></center>"})
+            answer.append({"Описание": f"<pre>{stend['Description']}</pre>","Стенд": f"{webUrl}", "Доступен": "<center><font color=""red"">Нет</font></center>"})
         except requests.exceptions.ReadTimeout:
-            answer.append({"Описание": f"{stend['Description']}","Стенд": f"{webUrl}", "Доступен": "<center><font color=""red"">Нет</font></center>"})
+            answer.append({"Описание": f"<pre>{stend['Description']}</pre>","Стенд": f"{webUrl}", "Доступен": "<center><font color=""red"">Нет</font></center>"})
     html_content = head + "<b>Проверка доступности стендов</b><br/><br/>"+json2html.json2html.convert(json=answer, escape=False) + back
     return HTMLResponse(content=html_content, status_code=200)
 
